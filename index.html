@@ -1,0 +1,1744 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ThriftCampus - Student Marketplace & Hub</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        :root {
+            --accent-bg: #2E7D32;
+            --accent-hover: #1b5e20;
+            --accent-light: #e8f5e9;
+            --accent-text: #2E7D32;
+        }
+        .accent-bg { background-color: var(--accent-bg) !important; }
+        .accent-hover:hover { background-color: var(--accent-hover) !important; }
+        .accent-text { color: var(--accent-text) !important; }
+        .accent-light-bg { background-color: var(--accent-light) !important; }
+
+        /* Themes & Scrolling Fixes */
+        html, body {
+            height: 100%;
+            overflow-y: auto !important;
+        }
+
+        /* Keep both the page surround and the application surface in the selected theme. */
+        body.light-theme { background-color: #ffffff; color: #111827; }
+        body.light-theme .app-card,
+        body.light-theme .screen:not(#screen-admin) { background-color: #ffffff !important; color: #111827; }
+
+        body.dark-theme { background-color: #111827; color: #F3F4F6; }
+        body.dark-theme .app-card { background-color: #1F2937 !important; border-color: #374151 !important; color: #F3F4F6 !important; }
+        body.dark-theme .screen:not(#screen-admin) { background-color: #1F2937 !important; color: #F3F4F6 !important; }
+        body.dark-theme .bg-white { background-color: #1F2937 !important; color: #F3F4F6 !important; border-color: #374151 !important; }
+        body.dark-theme .bg-gray-50, body.dark-theme .bg-gray-100 { background-color: #111827 !important; color: #F3F4F6 !important; border-color: #374151 !important; }
+        body.dark-theme input, body.dark-theme select, body.dark-theme textarea { background-color: #111827 !important; color: #ffffff !important; border-color: #4B5563 !important; }
+        body.dark-theme input::placeholder, body.dark-theme textarea::placeholder { color: #9CA3AF !important; }
+        
+        /* Light Theme Input & Text Visibility Fixes */
+        body.light-theme input, body.light-theme select, body.light-theme textarea { background-color: #ffffff !important; color: #111827 !important; border-color: #D1D5DB !important; }
+        body.light-theme input::placeholder, body.light-theme textarea::placeholder { color: #9CA3AF !important; }
+
+        body.dark-theme .text-gray-900, body.dark-theme .text-gray-800, body.dark-theme .text-gray-700, body.dark-theme .text-gray-600 { color: #F3F4F6 !important; }
+        body.dark-theme .text-gray-500 { color: #9CA3AF !important; }
+        body.dark-theme .border-gray-200, body.dark-theme .border-gray-300 { border-color: #374151 !important; }
+    </style>
+</head>
+<body class="light-theme min-h-screen font-sans flex flex-col items-center md:py-6 pb-20 md:pb-6 transition-colors duration-300">
+
+    <!-- App Container (Responsive for Mobile & Laptop) -->
+    <div id="app" class="app-card w-full md:max-w-4xl lg:max-w-5xl bg-white min-h-screen md:min-h-[88vh] shadow-2xl flex flex-col relative overflow-y-visible md:rounded-2xl transition-colors duration-300">
+        
+        <!-- HEADER -->
+        <header id="main-header" class="bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 px-4 py-3 flex justify-between items-center border-b border-gray-200 dark:border-gray-700 hidden">
+            <div class="flex items-center gap-2">
+                <img src="HomeLogo.jpeg" alt="ThriftCampus" class="w-8 h-8 rounded-lg object-contain bg-white shadow" onerror="this.style.display='none'">
+                <span id="header-title" class="text-sm font-bold truncate">ThriftCampus</span>
+            </div>
+            <div class="flex items-center gap-1.5">
+                <!-- Theme toggle -->
+                <button onclick="toggleDarkMode()" class="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition" title="Toggle Dark/Light Mode">
+                    <i data-lucide="sun" id="theme-icon" class="w-4 h-4 text-gray-700 dark:text-gray-200"></i>
+                </button>
+
+                <button onclick="openScreen('grievance')" class="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition" title="Grievance Portal">
+                    <i data-lucide="alert-circle" class="w-4 h-4 text-gray-600 dark:text-gray-300"></i>
+                </button>
+                <button onclick="openScreen('announcements')" class="relative p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition" title="Announcements">
+                    <i data-lucide="bell" class="w-4 h-4 text-gray-600 dark:text-gray-300"></i>
+                </button>
+                <button onclick="openScreen('my-profile')" class="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition" title="My Profile">
+                    <i data-lucide="user-round" class="w-4 h-4 text-gray-600 dark:text-gray-300"></i>
+                </button>
+                <button onclick="handleLogout()" class="p-1.5 hover:bg-red-50 dark:hover:bg-red-950 rounded-full transition text-red-600 hover:text-red-700" title="Logout">
+                    <i data-lucide="log-out" class="w-4 h-4"></i>
+                </button>
+            </div>
+        </header>
+
+        <!-- ================= SCREENS ================= -->
+
+        <!-- 1. STUDENT EMAIL VERIFICATION SCREEN -->
+        <div id="screen-verify" class="screen flex-1 flex flex-col justify-between p-6 md:p-10 max-w-lg mx-auto w-full">
+            <div class="flex justify-end gap-2 pt-2">
+                <button onclick="toggleDarkMode()" class="p-2 bg-gray-100 dark:bg-gray-800 rounded-full text-gray-800 dark:text-gray-200 shadow" title="Toggle Theme">
+                    <i data-lucide="sun" id="theme-icon-verify" class="w-4 h-4"></i>
+                </button>
+            </div>
+            <div class="mt-4 text-center">
+                <div class="inline-block p-2 bg-blue-50 dark:bg-gray-800 rounded-2xl mb-3 border border-blue-100 dark:border-gray-700">
+                    <img src="Logo.jpeg" alt="ThriftCampus Logo" class="w-24 h-24 mx-auto object-contain rounded-xl" onerror="this.style.display='none'">
+                </div>
+                <h1 class="text-2xl font-extrabold accent-text">Campus Verification</h1>
+                <p class="text-xs text-gray-600 dark:text-gray-400 mt-1 px-2">Exclusive marketplace restricted to verified @gmail.com.edu students.</p>
+            </div>
+
+            <form onsubmit="handleVerifyEmail(event)" autocomplete="off" class="space-y-4 my-auto">
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase mb-1">College Email Address (@gmail.com.edu)</label>
+                    <input type="email" id="verify-email" placeholder="student@gmail.com.edu" required autocomplete="off"
+                        pattern="[a-zA-Z0-9._+\-]+@gmail\.com\.edu"
+                        title="Please enter a valid student email address ending with @gmail.com.edu"
+                        class="w-full px-4 py-3 rounded-xl border border-gray-300 bg-gray-50 dark:bg-gray-900 text-sm focus:ring-2 focus:ring-offset-1 focus:outline-none">
+                </div>
+                <button type="submit" class="w-full py-3.5 accent-bg text-white font-bold rounded-xl shadow accent-hover transition text-sm">
+                    Verify Student Email
+                </button>
+            </form>
+
+            <div class="text-center text-[10px] text-gray-400 pb-2">
+                Secure Campus Gateway • Cloud Synchronized
+            </div>
+        </div>
+
+        <!-- 2. COMPLETE PROFILE REGISTRATION SCREEN -->
+        <div id="screen-profile" class="screen hidden flex-1 flex flex-col p-6 md:p-8 overflow-y-auto max-w-xl mx-auto w-full">
+            <div class="accent-bg text-white p-4 -mx-6 -mt-6 md:-mx-8 md:-mt-8 mb-4 md:rounded-t-2xl">
+                <h2 class="text-base font-bold">Complete Your Student Profile</h2>
+                <p class="text-[11px] text-opacity-80">Required for Campus Network Access</p>
+            </div>
+
+            <form id="profile-form" onsubmit="handleRegisterProfile(event)" autocomplete="off" class="space-y-3.5 flex-1">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase mb-1">Full Name</label>
+                        <input type="text" id="prof-name" required autocomplete="off" class="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 text-xs bg-gray-50 dark:bg-gray-900">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase mb-1">College Name</label>
+                        <input type="text" id="prof-college" required autocomplete="off" class="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 text-xs bg-gray-50 dark:bg-gray-900">
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase mb-1">Course</label>
+                        <input type="text" id="prof-course" required autocomplete="off" class="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 text-xs bg-gray-50 dark:bg-gray-900">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase mb-1">Current Year</label>
+                        <select id="prof-year" autocomplete="off" class="w-full px-3 py-2.5 rounded-xl border border-gray-300 text-xs bg-gray-50 dark:bg-gray-900">
+                            <option value="1st Year">1st Year</option>
+                            <option value="2nd Year">2nd Year</option>
+                            <option value="3rd Year">3rd Year</option>
+                            <option value="4th Year">4th Year</option>
+                        </select>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase mb-1">Campus / Hostel Address</label>
+                    <input type="text" id="prof-address" required autocomplete="off" class="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 text-xs bg-gray-50 dark:bg-gray-900">
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase mb-1">Mobile Number (10 Digits)</label>
+                        <input type="tel" id="prof-phone" maxlength="10" pattern="[0-9]{10}" required autocomplete="off" class="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 text-xs bg-gray-50 dark:bg-gray-900" oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 10)">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase mb-1">Bank Account Number (12 Digits)</label>
+                        <input type="text" id="prof-bank" maxlength="12" pattern="[0-9]{12}" required autocomplete="off" class="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 text-xs bg-gray-50 dark:bg-gray-900" oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 12)">
+                    </div>
+                </div>
+
+                <div class="pt-2">
+                    <button type="submit" class="w-full py-3 accent-bg text-white font-bold rounded-xl shadow accent-hover transition text-xs uppercase tracking-wider">
+                        Register & Enter Marketplace
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- 3. STUDENT PROFILE SCREEN -->
+        <div id="screen-my-profile" class="screen hidden flex-1 flex flex-col bg-[#F9F6F0] dark:bg-gray-900 overflow-y-auto p-4 md:p-8 pb-8">
+            <div class="max-w-xl mx-auto w-full space-y-4">
+                <div class="bg-white dark:bg-gray-800 p-4 md:p-5 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm">
+                    <div class="flex items-start gap-4">
+                        <div class="relative flex-shrink-0">
+                            <div id="my-profile-photo-fallback" class="w-20 h-20 rounded-full accent-bg text-white flex items-center justify-center text-2xl font-extrabold border-4 border-white dark:border-gray-700 shadow"></div>
+                            <img id="my-profile-photo" alt="Student profile photo" class="hidden w-20 h-20 rounded-full object-cover border-4 border-white dark:border-gray-700 shadow">
+                        </div>
+                        <div class="min-w-0 flex-1">
+                            <p class="text-[10px] font-bold accent-text uppercase tracking-wide">Student Profile</p>
+                            <h2 id="my-profile-display-name" class="text-lg font-extrabold text-gray-900 dark:text-gray-100 truncate">Your profile</h2>
+                            <p id="my-profile-display-email" class="text-xs text-gray-500 dark:text-gray-400 truncate"></p>
+                            <p id="profile-edit-status" class="mt-2 text-[10px] font-medium text-gray-500 dark:text-gray-400"></p>
+                        </div>
+                    </div>
+                </div>
+
+                <form id="my-profile-form" onsubmit="saveStudentProfile(event)" autocomplete="off" class="space-y-3.5 bg-white dark:bg-gray-800 p-4 md:p-6 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase mb-1">Profile Photo</label>
+                        <input type="file" id="my-profile-photo-input" accept="image/*" onchange="previewStudentProfilePhoto()" class="w-full text-xs text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-gray-100 dark:file:bg-gray-700 file:text-gray-700 dark:file:text-gray-200 border border-gray-300 rounded-xl p-1">
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+                        <div>
+                            <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase mb-1">Full Name</label>
+                            <input type="text" id="my-prof-name" required autocomplete="off" class="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 text-xs bg-gray-50 dark:bg-gray-900">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase mb-1">College Name</label>
+                            <input type="text" id="my-prof-college" required autocomplete="off" class="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 text-xs bg-gray-50 dark:bg-gray-900">
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-3.5">
+                        <div>
+                            <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase mb-1">Course</label>
+                            <input type="text" id="my-prof-course" required autocomplete="off" class="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 text-xs bg-gray-50 dark:bg-gray-900">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase mb-1">Current Year</label>
+                            <select id="my-prof-year" autocomplete="off" class="w-full px-3 py-2.5 rounded-xl border border-gray-300 text-xs bg-gray-50 dark:bg-gray-900">
+                                <option value="1st Year">1st Year</option>
+                                <option value="2nd Year">2nd Year</option>
+                                <option value="3rd Year">3rd Year</option>
+                                <option value="4th Year">4th Year</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase mb-1">Campus / Hostel Address</label>
+                        <input type="text" id="my-prof-address" required autocomplete="off" class="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 text-xs bg-gray-50 dark:bg-gray-900">
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+                        <div>
+                            <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase mb-1">Mobile Number (10 Digits)</label>
+                            <input type="tel" id="my-prof-phone" maxlength="10" pattern="[0-9]{10}" required autocomplete="off" oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 10)" class="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 text-xs bg-gray-50 dark:bg-gray-900">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase mb-1">Bank Account Number (12 Digits)</label>
+                            <input type="text" id="my-prof-bank" maxlength="12" pattern="[0-9]{12}" required autocomplete="off" oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 12)" class="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 text-xs bg-gray-50 dark:bg-gray-900">
+                        </div>
+                    </div>
+                    <button id="my-profile-save-button" type="submit" class="w-full py-3 accent-bg text-white font-bold rounded-xl shadow accent-hover transition text-xs uppercase tracking-wider">Save Profile Changes</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- 4. HOME SCREEN -->
+        <div id="screen-home" class="screen hidden flex-1 flex flex-col bg-[#F9F6F0] dark:bg-gray-900">
+            <div class="p-3 md:p-4 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+                <div class="relative max-w-2xl mx-auto w-full">
+                    <i data-lucide="search" class="w-4 h-4 text-gray-400 absolute left-3 top-3"></i>
+                    <input type="text" id="search-input" oninput="filterListings()" placeholder="Search books, electronics, notes..." autocomplete="off"
+                        class="w-full pl-9 pr-4 py-2 bg-gray-100 dark:bg-gray-900 rounded-xl text-xs border border-gray-200 dark:border-gray-700 focus:outline-none">
+                </div>
+            </div>
+
+            <div class="flex-1 overflow-y-auto p-3 md:p-6 space-y-3 pb-24">
+                <div class="flex justify-between items-center max-w-5xl mx-auto w-full">
+                    <h3 class="text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wide">Campus Marketplace Feed</h3>
+                    <span id="listing-count" class="text-[10px] text-gray-500 font-medium">0 items available</span>
+                </div>
+                <div id="listings-feed" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 max-w-5xl mx-auto w-full"></div>
+            </div>
+        </div>
+
+        <!-- 4. SELL ITEM SCREEN -->
+        <div id="screen-sell" class="screen hidden flex-1 flex flex-col bg-[#F9F6F0] dark:bg-gray-900 overflow-y-auto p-4 md:p-8 pb-24">
+            <div class="max-w-xl mx-auto w-full">
+                <div class="accent-bg text-white p-3.5 mb-4 rounded-2xl shadow-sm">
+                    <h2 class="text-sm font-bold">Post an Item for Sale</h2>
+                    <p class="text-[10px] text-opacity-80">List essentials for your campus peers</p>
+                </div>
+
+                <form id="sell-form" onsubmit="handlePostListing(event)" autocomplete="off" class="space-y-3 bg-white dark:bg-gray-800 p-4 md:p-6 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase mb-1">Product Title</label>
+                        <input type="text" id="sell-title" required autocomplete="off" class="w-full px-3 py-2.5 rounded-xl border border-gray-300 text-xs bg-gray-50 dark:bg-gray-900">
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase mb-1">Category</label>
+                            <select id="sell-category" autocomplete="off" class="w-full px-3 py-2.5 rounded-xl border border-gray-300 text-xs bg-gray-50 dark:bg-gray-900">
+                                <option value="Books & Notes">Books & Notes</option>
+                                <option value="Electronics">Electronics</option>
+                                <option value="Stationery Items">Stationery Items</option>
+                                <option value="Hostel Essentials">Hostel Essentials</option>
+                                <option value="Cycles & Transport">Cycles & Transport</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase mb-1">Selling Price (₹)</label>
+                            <input type="number" id="sell-price" required autocomplete="off" class="w-full px-3 py-2.5 rounded-xl border border-gray-300 text-xs bg-gray-50 dark:bg-gray-900">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase mb-1">Exchange Location</label>
+                        <input type="text" id="sell-location" required autocomplete="off" class="w-full px-3 py-2.5 rounded-xl border border-gray-300 text-xs bg-gray-50 dark:bg-gray-900">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase mb-1">Detailed Description</label>
+                        <textarea id="sell-desc" rows="3" required autocomplete="off" class="w-full px-3 py-2.5 rounded-xl border border-gray-300 text-xs bg-gray-50 dark:bg-gray-900"></textarea>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase mb-1">Attach Camera Photo / File / PDF</label>
+                        <input type="file" id="sell-file" accept="image/*,.pdf,.doc,.docx" capture="environment" class="w-full text-xs text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-gray-100 dark:file:bg-gray-700 file:text-gray-700 dark:file:text-gray-200 border border-gray-300 rounded-xl p-1">
+                    </div>
+
+                    <div class="pt-2">
+                        <button type="submit" class="w-full py-3 accent-bg text-white font-bold rounded-xl shadow accent-hover transition text-xs uppercase">
+                            Publish Listing
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- 5. ADS SCREEN -->
+        <div id="screen-ads" class="screen hidden flex-1 flex flex-col bg-[#F9F6F0] dark:bg-gray-900 overflow-y-auto p-4 md:p-6 pb-24">
+            <div class="max-w-5xl mx-auto w-full">
+                <div class="flex justify-between items-center mb-3">
+                    <div>
+                        <h2 class="text-sm font-bold text-gray-800 dark:text-gray-200 uppercase">Campus Ads & Rentals</h2>
+                        <p class="text-[10px] text-gray-500">Discounted housing & student ads</p>
+                    </div>
+                    <button onclick="openAdForm('pg')" class="px-3 py-1.5 accent-bg text-white text-xs font-bold rounded-xl shadow accent-hover flex items-center gap-1">
+                        <i data-lucide="plus" class="w-3.5 h-3.5"></i> Post Ad (₹300)
+                    </button>
+                </div>
+                <div id="pg-feed" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3"></div>
+            </div>
+        </div>
+
+        <!-- 6. FESTS & PROGRAMS SCREEN -->
+        <div id="screen-fests" class="screen hidden flex-1 flex flex-col bg-[#F9F6F0] dark:bg-gray-900 overflow-y-auto p-4 md:p-6 pb-24">
+            <div class="max-w-5xl mx-auto w-full">
+                <div class="flex justify-between items-center mb-3">
+                    <div>
+                        <h2 class="text-sm font-bold text-gray-800 dark:text-gray-200 uppercase">Campus Fests & Events</h2>
+                        <p class="text-[10px] text-gray-500">Cultural & tech fests</p>
+                    </div>
+                    <button onclick="openAdForm('fest')" class="px-3 py-1.5 accent-bg text-white text-xs font-bold rounded-xl shadow accent-hover flex items-center gap-1">
+                        <i data-lucide="plus" class="w-3.5 h-3.5"></i> Post Fest (₹300)
+                    </button>
+                </div>
+                <div id="fest-feed" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3"></div>
+            </div>
+        </div>
+
+        <!-- 7. ANNOUNCEMENTS SCREEN -->
+        <div id="screen-announcements" class="screen hidden flex-1 flex flex-col bg-[#F9F6F0] dark:bg-gray-900 overflow-y-auto p-4 md:p-6 pb-24">
+            <div class="max-w-5xl mx-auto w-full">
+                <div class="flex justify-between items-center mb-3">
+                    <div>
+                        <h2 class="text-sm font-bold text-gray-800 dark:text-gray-200 uppercase">Campus Announcements</h2>
+                        <p class="text-[10px] text-gray-500">Official notices</p>
+                    </div>
+                    <button onclick="openAdForm('announcement')" class="px-3 py-1.5 accent-bg text-white text-xs font-bold rounded-xl shadow accent-hover flex items-center gap-1">
+                        <i data-lucide="megaphone" class="w-3.5 h-3.5"></i> Post Notice (₹300)
+                    </button>
+                </div>
+                <div id="announcement-feed" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3"></div>
+            </div>
+        </div>
+
+        <!-- 7.1 CREATE AD FORM SCREEN -->
+        <div id="screen-ad-form" class="screen hidden flex-1 flex flex-col bg-[#F9F6F0] dark:bg-gray-900 p-4 md:p-8 overflow-y-auto pb-24">
+            <div class="max-w-xl mx-auto w-full">
+                <div class="accent-bg text-white p-3 mb-3 rounded-2xl flex items-center gap-3">
+                    <button onclick="openScreen(currentAdCategory === 'pg' ? 'ads' : currentAdCategory === 'fest' ? 'fests' : 'announcements')"><i data-lucide="arrow-left" class="w-5 h-5"></i></button>
+                    <h2 id="ad-form-heading" class="text-sm font-bold">Create Ad</h2>
+                </div>
+                <form onsubmit="submitAdForm(event)" autocomplete="off" class="space-y-3 bg-white dark:bg-gray-800 p-4 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase mb-1">Title / Heading</label>
+                        <input type="text" id="input-ad-title" required autocomplete="off" class="w-full px-3 py-2.5 rounded-xl border border-gray-300 text-xs bg-gray-50 dark:bg-gray-900">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase mb-1">Description / Details</label>
+                        <textarea id="input-ad-desc" rows="4" required autocomplete="off" class="w-full px-3 py-2.5 rounded-xl border border-gray-300 text-xs bg-gray-50 dark:bg-gray-900"></textarea>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase mb-1">Attach Camera Photo / File / PDF</label>
+                        <input type="file" id="input-ad-file" accept="image/*,.pdf,.doc,.docx" capture="environment" class="w-full text-xs text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-gray-100 dark:file:bg-gray-700 file:text-gray-700 dark:file:text-gray-200 border border-gray-300 rounded-xl p-1">
+                    </div>
+                    <button type="submit" class="w-full py-3 accent-bg text-white font-bold rounded-xl shadow accent-hover transition text-xs uppercase">
+                        Proceed to Pay ₹300 via QR
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- 7.2 GRIEVANCE SUBMISSION SCREEN -->
+        <div id="screen-grievance" class="screen hidden flex-1 flex flex-col bg-[#F9F6F0] dark:bg-gray-900 p-4 md:p-8 overflow-y-auto pb-24">
+            <div class="max-w-md mx-auto w-full">
+                <div class="accent-bg text-white p-3 mb-3 rounded-2xl flex items-center justify-between">
+                    <button onclick="openScreen('home')"><i data-lucide="arrow-left" class="w-5 h-5"></i></button>
+                    <h2 class="text-sm font-bold">Campus Grievance Portal</h2>
+                    <span class="w-5"></span>
+                </div>
+                <form onsubmit="submitGrievanceForm(event)" autocomplete="off" class="space-y-3 bg-white dark:bg-gray-800 p-4 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm">
+                    <p class="text-xs text-gray-600 dark:text-gray-300">Submit your grievances or issues securely. A fee of ₹100 is required to file a grievance, which is visible exclusively to the admin[cite: 1].</p>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase mb-1">Grievance / Issue Details</label>
+                        <textarea id="grievance-desc" rows="4" required autocomplete="off" class="w-full px-3 py-2.5 rounded-xl border border-gray-300 text-xs bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100"></textarea>
+                    </div>
+                    <button type="submit" class="w-full py-3 accent-bg text-white font-bold rounded-xl shadow accent-hover transition text-xs uppercase">
+                        Proceed to Pay ₹100 & Submit Grievance
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- 8. CHECKOUT SCREEN -->
+        <div id="screen-checkout" class="screen hidden flex-1 flex flex-col bg-[#F9F6F0] dark:bg-gray-900 p-4 md:p-8 overflow-y-auto pb-24">
+            <div class="max-w-md mx-auto w-full">
+                <div class="accent-bg text-white p-3 mb-3 rounded-2xl text-center">
+                    <h2 class="text-sm font-bold">Secure QR Checkout & E-Bill</h2>
+                </div>
+
+                <div class="bg-white dark:bg-gray-800 p-4 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 text-center mb-3">
+                    <p class="text-xs font-bold text-gray-500 uppercase mb-2">Scan QR to Complete Transaction</p>
+                    <div class="bg-gray-50 dark:bg-gray-900 p-3 rounded-xl inline-block border border-gray-200 dark:border-gray-700 my-1">
+                        <i data-lucide="qr-code" class="w-28 h-28 mx-auto text-gray-800 dark:text-gray-200"></i>
+                    </div>
+                    <p id="checkout-purpose" class="text-xs font-bold text-gray-800 dark:text-gray-200 mt-1">Item Purchase Fee</p>
+                </div>
+
+                <div class="bg-white dark:bg-gray-800 p-4 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 space-y-2 mb-4">
+                    <h4 class="font-bold text-xs uppercase accent-text border-b pb-1">Billing Breakdown</h4>
+                    <div class="flex justify-between text-xs text-gray-600 dark:text-gray-400">
+                        <span id="bill-item-name">Base Amount</span>
+                        <span id="bill-base-price">₹0</span>
+                    </div>
+                    <div id="fee-breakdown-box" class="space-y-1">
+                        <div class="flex justify-between text-xs text-gray-600 dark:text-gray-400">
+                            <span>Buyer Convenience Fee (5%)</span>
+                            <span id="bill-buyer-fee">₹0</span>
+                        </div>
+                        <div class="flex justify-between text-xs text-gray-600 dark:text-gray-400">
+                            <span>Seller Platform Fee (2%)</span>
+                            <span id="bill-seller-fee">₹0</span>
+                        </div>
+                    </div>
+                    <div class="border-t pt-2 flex justify-between text-sm font-bold text-gray-900 dark:text-gray-100">
+                        <span>Total Payable</span>
+                        <span id="bill-total" class="accent-text">₹0</span>
+                    </div>
+                </div>
+
+                <button onclick="confirmQRPayment()" class="w-full py-3 accent-bg text-white font-bold rounded-xl shadow accent-hover transition text-xs uppercase">
+                    Simulate Successful QR Payment
+                </button>
+            </div>
+        </div>
+
+        <!-- 9. PRIVATE CHAT SCREEN -->
+        <div id="screen-chat" class="screen hidden flex-1 flex flex-col bg-[#F9F6F0] dark:bg-gray-900 overflow-hidden max-w-2xl mx-auto w-full">
+            <div class="accent-bg text-white px-4 py-3 flex items-center gap-3">
+                <button onclick="openScreen('home')"><i data-lucide="arrow-left" class="w-5 h-5"></i></button>
+                <div>
+                    <h1 class="text-xs font-bold truncate max-w-[220px]" id="chat-title">Secure Chat</h1>
+                    <p class="text-[9px] text-opacity-80">100% Private Buyer-Seller Channel</p>
+                </div>
+            </div>
+
+            <div class="bg-amber-50 dark:bg-amber-950 border-b border-amber-200 dark:border-amber-900 px-3 py-1.5 text-[10px] text-amber-800 dark:text-amber-200 flex items-center gap-1.5">
+                <i data-lucide="shield-alert" class="w-4 h-4 text-amber-600 flex-shrink-0"></i>
+                <span>Private & secure: Visible only to Buyer, Seller, and Admin.</span>
+            </div>
+
+            <div id="chat-messages" class="flex-1 overflow-y-auto p-3 space-y-2"></div>
+
+            <div class="bg-white dark:bg-gray-800 p-2.5 border-t border-gray-200 dark:border-gray-700 flex gap-2">
+                <input type="text" id="chat-input" placeholder="Type secure message..." autocomplete="off"
+                    class="flex-1 px-3 py-2 rounded-xl border border-gray-300 bg-gray-50 dark:bg-gray-900 text-xs focus:outline-none">
+                <button onclick="sendChatMessage()" class="accent-bg text-white px-3.5 py-2 rounded-xl accent-hover transition">
+                    <i data-lucide="send" class="w-4 h-4"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- 10. REPORT SCREEN -->
+        <div id="screen-report" class="screen hidden flex-1 flex flex-col bg-[#F9F6F0] dark:bg-gray-900 p-4 md:p-8 overflow-y-auto">
+            <div class="max-w-md mx-auto w-full">
+                <div class="bg-red-600 text-white p-3 mb-3 rounded-2xl text-center">
+                    <h2 class="text-sm font-bold">Report Listing / Seller</h2>
+                </div>
+
+                <form onsubmit="submitReport(event)" autocomplete="off" class="space-y-3 bg-white dark:bg-gray-800 p-4 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm">
+                    <div class="bg-red-50 dark:bg-red-950 p-3 rounded-xl border border-red-200 dark:border-red-900">
+                        <p class="text-xs font-bold text-red-800 dark:text-red-300">Reporting Item:</p>
+                        <p id="report-item-title" class="text-xs font-semibold text-gray-900 dark:text-gray-100 mt-0.5">Item Title</p>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase mb-1">Reason</label>
+                        <select id="report-reason" autocomplete="off" class="w-full px-3 py-2.5 rounded-xl border border-gray-300 text-xs bg-gray-50 dark:bg-gray-900">
+                            <option value="Scam or Fraud">Scam or Fraud</option>
+                            <option value="Fake Item">Fake Item</option>
+                            <option value="Damaged Goods">Damaged Goods</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase mb-1">Description</label>
+                        <textarea id="report-desc" rows="4" required autocomplete="off" class="w-full px-3 py-2.5 rounded-xl border border-gray-300 text-xs bg-gray-50 dark:bg-gray-900"></textarea>
+                    </div>
+                    <button type="submit" class="w-full py-3 bg-red-600 text-white font-bold rounded-xl shadow hover:bg-red-700 transition text-xs uppercase">
+                        Submit Report
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- 11. ADMIN SCREEN -->
+        <div id="screen-admin" class="screen hidden flex-1 flex flex-col bg-gray-900 text-white p-4 md:p-6 overflow-y-auto pb-24">
+            <div class="max-w-5xl mx-auto w-full space-y-3">
+                <div class="flex justify-between items-center border-b border-gray-800 pb-2">
+                    <h2 class="text-sm font-bold uppercase tracking-wider text-amber-400">Admin Control Panel</h2>
+                    <button onclick="openScreen('home')" class="text-xs bg-gray-800 px-2.5 py-1 rounded-lg">Exit Admin</button>
+                </div>
+
+                <!-- Admin Tab Navigation -->
+                <div class="grid grid-cols-5 gap-1 bg-gray-950 p-1 rounded-xl">
+                    <button onclick="switchAdminTab('content')" id="atab-btn-content" class="py-1.5 px-1 rounded-lg text-[10px] font-bold bg-gray-800 text-amber-400 text-center truncate">Content</button>
+                    <button onclick="switchAdminTab('reports')" id="atab-btn-reports" class="py-1.5 px-1 rounded-lg text-[10px] font-bold text-gray-300 text-center truncate">Reports</button>
+                    <button onclick="switchAdminTab('users')" id="atab-btn-users" class="py-1.5 px-1 rounded-lg text-[10px] font-bold text-gray-300 text-center truncate">Users</button>
+                    <button onclick="switchAdminTab('grievances')" id="atab-btn-grievances" class="py-1.5 px-1 rounded-lg text-[10px] font-bold text-gray-300 text-center truncate">Grievances</button>
+                    <button onclick="switchAdminTab('chat')" id="atab-btn-chat" class="py-1.5 px-1 rounded-lg text-[10px] font-bold text-gray-300 text-center truncate">Messaging</button>
+                </div>
+
+                <!-- TAB 1: CONTENT MANAGEMENT -->
+                <div id="atab-content" class="admin-tab-content space-y-3">
+                    <h3 class="text-xs font-bold uppercase text-amber-300">Website Listings & Content Deletion</h3>
+                    <div class="space-y-2">
+                        <h4 class="text-[11px] font-semibold text-gray-300 border-b border-gray-800 pb-1">Marketplace Products</h4>
+                        <div id="admin-listings-list" class="grid grid-cols-1 md:grid-cols-2 gap-2"></div>
+                    </div>
+                    <div class="space-y-2 pt-2">
+                        <h4 class="text-[11px] font-semibold text-gray-300 border-b border-gray-800 pb-1">PG Ads & Fests & Notices</h4>
+                        <div id="admin-ads-list" class="grid grid-cols-1 md:grid-cols-2 gap-2"></div>
+                    </div>
+                </div>
+
+                <!-- TAB 2: REPORTS SECTION -->
+                <div id="atab-reports" class="admin-tab-content space-y-3 hidden">
+                    <h3 class="text-xs font-bold uppercase text-amber-300">User Reports & Verification</h3>
+                    <div id="admin-reports-container" class="grid grid-cols-1 md:grid-cols-2 gap-3"></div>
+                </div>
+
+                <!-- TAB 3: USERS SECTION -->
+                <div id="atab-users" class="admin-tab-content space-y-3 hidden">
+                    <h3 class="text-xs font-bold uppercase text-amber-300">Registered Users Directory</h3>
+                    <div id="admin-users-container" class="grid grid-cols-1 md:grid-cols-2 gap-2"></div>
+                </div>
+
+                <!-- TAB 4: GRIEVANCES SECTION (ADMIN ONLY VIEW) -->
+                <div id="atab-grievances" class="admin-tab-content space-y-3 hidden">
+                    <h3 class="text-xs font-bold uppercase text-amber-300">Student Grievances (Admin Only View)[cite: 1]</h3>
+                    <div id="admin-grievances-container" class="grid grid-cols-1 md:grid-cols-2 gap-3"></div>
+                </div>
+
+                <!-- TAB 5: ADMIN MESSAGING -->
+                <div id="atab-chat" class="admin-tab-content space-y-3 hidden">
+                    <h3 class="text-xs font-bold uppercase text-amber-300">Direct Admin & Chat Audit</h3>
+                    <div class="bg-gray-800 p-3 rounded-xl space-y-2 max-w-lg">
+                        <label class="block text-[10px] font-bold uppercase text-gray-300">Search User by Email or Name</label>
+                        <div class="flex gap-2">
+                            <input type="text" id="admin-search-user" autocomplete="off" class="flex-1 px-3 py-2 rounded-xl bg-gray-900 text-white text-xs focus:outline-none">
+                            <button onclick="searchUserForAdminChat()" class="px-3 py-2 bg-amber-500 text-gray-950 font-bold text-xs rounded-xl">Search</button>
+                        </div>
+                    </div>
+                    <div id="admin-direct-chat-area" class="space-y-2"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- BOTTOM NAVIGATION -->
+        <nav id="bottom-nav" class="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 py-2 px-4 flex justify-around items-center w-full flex-shrink-0 hidden">
+            <button onclick="openScreen('home')" class="flex flex-col items-center accent-text">
+                <i data-lucide="home" class="w-5 h-5"></i>
+                <span class="text-[10px] font-bold mt-0.5">Home</span>
+            </button>
+            <button onclick="openScreen('sell')" class="flex flex-col items-center text-gray-400 hover:text-gray-700 dark:hover:text-gray-200">
+                <i data-lucide="plus-circle" class="w-5 h-5"></i>
+                <span class="text-[10px] font-medium mt-0.5">Sell</span>
+            </button>
+            <button onclick="openScreen('ads')" class="flex flex-col items-center text-gray-400 hover:text-gray-700 dark:hover:text-gray-200">
+                <i data-lucide="megaphone" class="w-5 h-5"></i>
+                <span class="text-[10px] font-medium mt-0.5">Ads</span>
+            </button>
+            <button onclick="openScreen('fests')" class="flex flex-col items-center text-gray-400 hover:text-gray-700 dark:hover:text-gray-200">
+                <i data-lucide="calendar" class="w-5 h-5"></i>
+                <span class="text-[10px] font-medium mt-0.5">Fests</span>
+            </button>
+            <button onclick="promptAdminLogin()" class="flex flex-col items-center text-amber-600">
+                <i data-lucide="shield" class="w-5 h-5"></i>
+                <span class="text-[10px] font-bold mt-0.5">Admin</span>
+            </button>
+        </nav>
+    </div>
+
+    <!-- Firebase & Application Logic Script -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, collection, doc, setDoc, getDoc, updateDoc, deleteDoc, onSnapshot, getDocs, addDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyAEmZfTiYgfbb2A6APf7qm58nUHeUEY__8",
+            authDomain: "thriftcampus-c9560.firebaseapp.com",
+            projectId: "thriftcampus-c9560",
+            storageBucket: "thriftcampus-c9560.appspot.com",
+            messagingSenderId: "1093287357633",
+            appId: "1:1093287357633:web:05f2b7b95dc3650f840",
+            measurementId: "G-ZYQJJLVMNW"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const dbFirestore = getFirestore(app);
+
+        let db = {
+            currentUser: JSON.parse(localStorage.getItem('tc_user')) || null,
+            users: [],
+            listings: [],
+            pgAds: [],
+            fests: [],
+            announcements: [],
+            reports: [],
+            grievances: [],
+            chats: {}
+        };
+
+        let activeCheckoutType = null;
+        let pendingItemData = null;
+        let activeChatRoomId = null;
+        let currentAdCategory = null;
+        let tempAdData = null;
+        let tempGrievanceData = null;
+        const PROFILE_EDIT_COOLDOWN_MS = 30 * 24 * 60 * 60 * 1000;
+
+        // Theme initialization
+        function initThemeAndAccent() {
+            const savedTheme = localStorage.getItem('tc_theme') || 'light-theme';
+
+            document.body.className = `${savedTheme} min-h-screen font-sans flex flex-col items-center md:py-6 pb-20 md:pb-6 transition-colors duration-300`;
+            updateThemeIcon(savedTheme);
+            localStorage.removeItem('tc_accent');
+            setAccentColor('green', false);
+        }
+
+        window.toggleDarkMode = function() {
+            const isDark = document.body.classList.contains('dark-theme');
+            const newTheme = isDark ? 'light-theme' : 'dark-theme';
+            document.body.className = `${newTheme} min-h-screen font-sans flex flex-col items-center md:py-6 pb-20 md:pb-6 transition-colors duration-300`;
+            localStorage.setItem('tc_theme', newTheme);
+            updateThemeIcon(newTheme);
+        };
+
+        function updateThemeIcon(theme) {
+            const icon = document.getElementById('theme-icon');
+            const iconVerify = document.getElementById('theme-icon-verify');
+            const iconType = theme === 'light-theme' ? 'sun' : 'moon'; 
+            if (icon) {
+                icon.setAttribute('data-lucide', iconType);
+            }
+            if (iconVerify) {
+                iconVerify.setAttribute('data-lucide', iconType);
+            }
+            lucide.createIcons();
+        }
+
+        window.setAccentColor = function(colorName, save = true) {
+            const root = document.documentElement;
+            let bg = '#2E7D32', hover = '#1b5e20', light = '#e8f5e9', text = '#2E7D32';
+
+            if (colorName === 'blue') {
+                bg = '#1A237E'; hover = '#0d1256'; light = '#e8eaf6'; text = '#1A237E';
+            } else if (colorName === 'orange') {
+                bg = '#E65100'; hover = '#b53e00'; light = '#fff3e0'; text = '#E65100';
+            } else if (colorName === 'purple') {
+                bg = '#6A1B9A'; hover = '#4a126b'; light = '#f3e5f5'; text = '#6A1B9A';
+            }
+
+            root.style.setProperty('--accent-bg', bg);
+            root.style.setProperty('--accent-hover', hover);
+            root.style.setProperty('--accent-light', light);
+            root.style.setProperty('--accent-text', text);
+
+            if (save) {
+                localStorage.setItem('tc_accent', colorName);
+            }
+        };
+
+        function initRealtimeSync() {
+            onSnapshot(collection(dbFirestore, "users"), (snapshot) => {
+                db.users = snapshot.docs.map(doc => doc.data());
+                if (db.currentUser) {
+                    const updated = db.users.find(u => u.email === db.currentUser.email);
+                    if (updated) { db.currentUser = updated; localStorage.setItem('tc_user', JSON.stringify(db.currentUser)); }
+                }
+                const activeScreen = document.querySelector('.screen:not(.hidden)');
+                if (activeScreen && activeScreen.id === 'screen-admin') renderAdminUsers();
+                if (activeScreen && activeScreen.id === 'screen-my-profile') populateStudentProfile();
+            });
+
+            onSnapshot(collection(dbFirestore, "listings"), (snapshot) => {
+                db.listings = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                const activeScreen = document.querySelector('.screen:not(.hidden)');
+                if (activeScreen && activeScreen.id === 'screen-home') renderListings();
+                if (activeScreen && activeScreen.id === 'screen-admin') renderAdminContent();
+            });
+
+            onSnapshot(collection(dbFirestore, "pgAds"), (snapshot) => {
+                db.pgAds = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                const activeScreen = document.querySelector('.screen:not(.hidden)');
+                if (activeScreen && activeScreen.id === 'screen-ads') renderPGAds();
+                if (activeScreen && activeScreen.id === 'screen-admin') renderAdminContent();
+            });
+
+            onSnapshot(collection(dbFirestore, "fests"), (snapshot) => {
+                db.fests = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                const activeScreen = document.querySelector('.screen:not(.hidden)');
+                if (activeScreen && activeScreen.id === 'screen-fests') renderFests();
+                if (activeScreen && activeScreen.id === 'screen-admin') renderAdminContent();
+            });
+
+            onSnapshot(collection(dbFirestore, "announcements"), (snapshot) => {
+                db.announcements = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                const activeScreen = document.querySelector('.screen:not(.hidden)');
+                if (activeScreen && activeScreen.id === 'screen-announcements') renderAnnouncements();
+                if (activeScreen && activeScreen.id === 'screen-admin') renderAdminContent();
+            });
+
+            onSnapshot(collection(dbFirestore, "reports"), (snapshot) => {
+                db.reports = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                const activeScreen = document.querySelector('.screen:not(.hidden)');
+                if (activeScreen && activeScreen.id === 'screen-admin') renderAdminReports();
+            });
+
+            onSnapshot(collection(dbFirestore, "grievances"), (snapshot) => {
+                db.grievances = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                const activeScreen = document.querySelector('.screen:not(.hidden)');
+                if (activeScreen && activeScreen.id === 'screen-admin') renderAdminGrievances();
+            });
+        }
+
+        window.onload = function() {
+            initThemeAndAccent();
+            initRealtimeSync();
+            if (!db.currentUser) {
+                openScreen('verify');
+            } else if (!db.currentUser.registered) {
+                openScreen('profile');
+            } else {
+                openScreen('home');
+            }
+            lucide.createIcons();
+        };
+
+        function openScreen(screenId) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
+            document.getElementById(`screen-${screenId}`).classList.remove('hidden');
+
+            const header = document.getElementById('main-header');
+            const nav = document.getElementById('bottom-nav');
+
+            if (screenId === 'verify' || screenId === 'profile' || screenId === 'chat') {
+                header.classList.add('hidden');
+                nav.classList.add('hidden');
+            } else {
+                header.classList.remove('hidden');
+                nav.classList.remove('hidden');
+            }
+
+            if (screenId === 'profile') {
+                document.getElementById('prof-name').value = '';
+                document.getElementById('prof-college').value = '';
+                document.getElementById('prof-course').value = '';
+                document.getElementById('prof-year').value = '1st Year';
+                document.getElementById('prof-address').value = '';
+                document.getElementById('prof-phone').value = '';
+                document.getElementById('prof-bank').value = '';
+            }
+
+            if (screenId === 'my-profile') {
+                populateStudentProfile();
+            }
+
+            if (screenId === 'sell') {
+                document.getElementById('sell-form').reset();
+            }
+
+            if (screenId === 'home') renderListings();
+            if (screenId === 'ads') renderPGAds();
+            if (screenId === 'fests') renderFests();
+            if (screenId === 'announcements') renderAnnouncements();
+            if (screenId === 'admin') renderAdminDashboard();
+
+            window.scrollTo(0,0);
+            setTimeout(() => lucide.createIcons(), 50);
+        }
+        window.openScreen = openScreen;
+
+        async function handleVerifyEmail(e) {
+            e.preventDefault(); // Prevents default form submission / page refresh
+            const emailInput = document.getElementById('verify-email');
+            const email = emailInput.value.trim().toLowerCase();
+            
+            console.log('🔍 Email verification started for:', email);
+            
+            // Client-Side Regex Validation & Domain Restriction Format Verification
+            // Allows any random letters/numbers/characters preceding @gmail.com.edu
+            // FIXED: Removed problematic % character from character class
+            const emailRegex = /^[a-zA-Z0-9._+\-]+@gmail\.com\.edu$/;
+            if (!emailRegex.test(email)) {
+                console.error('❌ Email failed regex validation:', email);
+                alert('❌ Invalid Student ID!\n\nOnly verified college students with @gmail.com.edu email addresses can access this platform.\n\nPlease enter your official college email address.');
+                emailInput.focus();
+                return;
+            }
+
+            console.log('✅ Email passed regex validation, checking Firebase...');
+
+            try {
+                const userRef = doc(dbFirestore, "users", email);
+                const userSnap = await getDoc(userRef);
+
+                console.log('🔎 Firebase lookup completed. User exists:', userSnap.exists());
+
+                if (userSnap.exists()) {
+                    console.log('👤 Existing user found, redirecting to home');
+                    db.currentUser = userSnap.data();
+                    localStorage.setItem('tc_user', JSON.stringify(db.currentUser));
+                    openScreen('home');
+                    return;
+                }
+
+                console.log('👤 New user detected, redirecting to profile');
+                db.currentUser = { email: email, registered: false };
+                localStorage.setItem('tc_user', JSON.stringify(db.currentUser));
+                openScreen('profile');
+            } catch (error) {
+                console.error('❌ Firebase error:', error);
+                alert('Error verifying email: ' + error.message);
+            }
+        }
+        window.handleVerifyEmail = handleVerifyEmail;
+
+        async function handleRegisterProfile(e) {
+            e.preventDefault();
+            const phone = document.getElementById('prof-phone').value.trim();
+            const bank = document.getElementById('prof-bank').value.trim();
+
+            if (!/^\d{10}$/.test(phone)) {
+                alert('Mobile number must be exactly 10 digits.');
+                return;
+            }
+            if (!/^\d{12}$/.test(bank)) {
+                alert('Bank account details must be exactly 12 digits.');
+                return;
+            }
+
+            db.currentUser = {
+                email: db.currentUser.email,
+                registered: true,
+                name: document.getElementById('prof-name').value,
+                college: document.getElementById('prof-college').value,
+                course: document.getElementById('prof-course').value,
+                year: document.getElementById('prof-year').value,
+                address: document.getElementById('prof-address').value,
+                phone: phone,
+                bank: bank,
+                profilePhoto: '',
+                profileCreatedAt: Date.now(),
+                lastProfileUpdateAt: null,
+                profileNextEditAt: null
+            };
+
+            await setDoc(doc(dbFirestore, "users", db.currentUser.email), db.currentUser);
+            localStorage.setItem('tc_user', JSON.stringify(db.currentUser));
+            openScreen('home');
+        }
+        window.handleRegisterProfile = handleRegisterProfile;
+
+        function getProfileNextEditAt(user) {
+            return user && Number.isFinite(Number(user.profileNextEditAt)) ? Number(user.profileNextEditAt) : 0;
+        }
+
+        function getProfileInitials(name) {
+            const words = String(name || 'Student').trim().split(/\s+/).filter(Boolean);
+            return words.slice(0, 2).map(word => word.charAt(0).toUpperCase()).join('') || 'S';
+        }
+
+        function renderStudentProfilePhoto(photoUrl, name) {
+            const image = document.getElementById('my-profile-photo');
+            const fallback = document.getElementById('my-profile-photo-fallback');
+            if (!image || !fallback) return;
+
+            if (photoUrl) {
+                image.src = photoUrl;
+                image.classList.remove('hidden');
+                fallback.classList.add('hidden');
+            } else {
+                image.removeAttribute('src');
+                image.classList.add('hidden');
+                fallback.textContent = getProfileInitials(name);
+                fallback.classList.remove('hidden');
+            }
+        }
+
+        function populateStudentProfile() {
+            const user = db.currentUser;
+            if (!user) return;
+
+            document.getElementById('my-profile-display-name').textContent = user.name || 'Your profile';
+            document.getElementById('my-profile-display-email').textContent = user.email || '';
+            document.getElementById('my-prof-name').value = user.name || '';
+            document.getElementById('my-prof-college').value = user.college || '';
+            document.getElementById('my-prof-course').value = user.course || '';
+            document.getElementById('my-prof-year').value = user.year || '1st Year';
+            document.getElementById('my-prof-address').value = user.address || '';
+            document.getElementById('my-prof-phone').value = user.phone || '';
+            document.getElementById('my-prof-bank').value = user.bank || '';
+            document.getElementById('my-profile-photo-input').value = '';
+            renderStudentProfilePhoto(user.profilePhoto, user.name);
+
+            const nextEditAt = getProfileNextEditAt(user);
+            const canEdit = Date.now() >= nextEditAt;
+            const status = document.getElementById('profile-edit-status');
+            const saveButton = document.getElementById('my-profile-save-button');
+
+            if (canEdit) {
+                status.textContent = 'You can update your profile now. Your next update will be available 30 days after you save.';
+                status.className = 'mt-2 text-[10px] font-medium text-green-700 dark:text-green-300';
+                saveButton.textContent = 'Save Profile Changes';
+            } else {
+                status.textContent = `Your next profile update is available on ${new Date(nextEditAt).toLocaleDateString()}.`;
+                status.className = 'mt-2 text-[10px] font-medium text-amber-700 dark:text-amber-300';
+                saveButton.textContent = 'Profile Update Locked';
+            }
+        }
+
+        window.previewStudentProfilePhoto = function() {
+            const file = document.getElementById('my-profile-photo-input').files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = event => renderStudentProfilePhoto(event.target.result, db.currentUser ? db.currentUser.name : 'Student');
+            reader.readAsDataURL(file);
+        };
+
+        window.saveStudentProfile = async function(e) {
+            e.preventDefault();
+            if (!db.currentUser) return;
+
+            const nextEditAt = getProfileNextEditAt(db.currentUser);
+            if (Date.now() < nextEditAt) {
+                populateStudentProfile();
+                alert(`You can update your profile again on ${new Date(nextEditAt).toLocaleDateString()}. Please wait 30 days after your last saved update.`);
+                return;
+            }
+
+            const phone = document.getElementById('my-prof-phone').value.trim();
+            const bank = document.getElementById('my-prof-bank').value.trim();
+            if (!/^\d{10}$/.test(phone)) {
+                alert('Mobile number must be exactly 10 digits.');
+                return;
+            }
+            if (!/^\d{12}$/.test(bank)) {
+                alert('Bank account details must be exactly 12 digits.');
+                return;
+            }
+
+            const photoFile = document.getElementById('my-profile-photo-input').files[0];
+            const photo = photoFile ? await processFileToCompressedBase64(photoFile) : (db.currentUser.profilePhoto || '');
+            const profileCreatedAt = Number(db.currentUser.profileCreatedAt) || Date.now();
+            const lastProfileUpdateAt = Date.now();
+
+            db.currentUser = {
+                ...db.currentUser,
+                registered: true,
+                name: document.getElementById('my-prof-name').value.trim(),
+                college: document.getElementById('my-prof-college').value.trim(),
+                course: document.getElementById('my-prof-course').value.trim(),
+                year: document.getElementById('my-prof-year').value,
+                address: document.getElementById('my-prof-address').value.trim(),
+                phone: phone,
+                bank: bank,
+                profilePhoto: photo,
+                profileCreatedAt: profileCreatedAt,
+                lastProfileUpdateAt: lastProfileUpdateAt,
+                profileNextEditAt: lastProfileUpdateAt + PROFILE_EDIT_COOLDOWN_MS
+            };
+
+            await setDoc(doc(dbFirestore, 'users', db.currentUser.email), db.currentUser);
+            localStorage.setItem('tc_user', JSON.stringify(db.currentUser));
+            populateStudentProfile();
+            alert('Profile updated successfully.');
+        };
+
+        function handleLogout() {
+            if (confirm('Are you sure you want to log out?')) {
+                db.currentUser = null;
+                localStorage.removeItem('tc_user');
+                document.getElementById('verify-email').value = '';
+                openScreen('verify');
+            }
+        }
+        window.handleLogout = handleLogout;
+
+        function processFileToCompressedBase64(file) {
+            return new Promise((resolve) => {
+                if (!file) {
+                    resolve('');
+                    return;
+                }
+                if (!file.type.startsWith('image/')) {
+                    const reader = new FileReader();
+                    reader.onload = (e) => resolve(e.target.result);
+                    reader.readAsDataURL(file);
+                    return;
+                }
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        const canvas = document.createElement('canvas');
+                        let width = img.width;
+                        let height = img.height;
+                        const maxWidth = 800;
+                        if (width > maxWidth) {
+                            height = Math.round((height * maxWidth) / width);
+                            width = maxWidth;
+                        }
+                        canvas.width = width;
+                        canvas.height = height;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, width, height);
+                        resolve(canvas.toDataURL('image/jpeg', 0.7));
+                    };
+                    img.src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+
+        function renderAttachmentElement(fileUrl) {
+            if (!fileUrl) return '';
+            if (fileUrl.startsWith('data:image/') || fileUrl.includes('image')) {
+                return `<img src="${fileUrl}" class="w-20 h-20 rounded-xl object-cover bg-gray-100 dark:bg-gray-800 flex-shrink-0">`;
+            } else {
+                return `
+                    <div class="w-20 h-20 rounded-xl accent-light-bg border border-gray-200 dark:border-gray-700 flex flex-col items-center justify-center p-1 flex-shrink-0 text-center">
+                        <i data-lucide="file-text" class="w-6 h-6 accent-text mb-1"></i>
+                        <span class="text-[9px] font-bold accent-text truncate w-full px-1">Doc / PDF</span>
+                    </div>
+                `;
+            }
+        }
+
+        function renderFullAttachmentElement(fileUrl) {
+            if (!fileUrl) return '';
+            if (fileUrl.startsWith('data:image/') || fileUrl.includes('image')) {
+                return `<img src="${fileUrl}" class="w-full h-36 rounded-xl object-cover mt-2 bg-gray-100 dark:bg-gray-800">`;
+            } else {
+                return `
+                    <div class="mt-2 p-2.5 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl flex items-center justify-between text-xs">
+                        <div class="flex items-center gap-2 truncate">
+                            <i data-lucide="file-text" class="w-4 h-4 accent-text flex-shrink-0"></i>
+                            <span class="text-gray-700 dark:text-gray-300 truncate font-medium">Attached Document / PDF</span>
+                        </div>
+                        <a href="${fileUrl}" download="ThriftCampus_Attachment" class="px-2.5 py-1 accent-light-bg accent-text font-bold rounded-lg hover:opacity-80 flex items-center gap-1 text-[10px]">
+                            <i data-lucide="download" class="w-3 h-3"></i> Download
+                        </a>
+                    </div>
+                `;
+            }
+        }
+
+        function renderOwnerDeleteButton(category, postId, posterEmail) {
+            if (!db.currentUser || posterEmail !== db.currentUser.email) return '';
+            return `
+                <div class="flex justify-end pt-1">
+                    <button onclick="deleteOwnPost('${category}', '${postId}')" class="px-2.5 py-1 bg-red-600 hover:bg-red-700 text-white text-[10px] font-bold rounded-lg">Delete</button>
+                </div>
+            `;
+        }
+
+        window.deleteOwnListing = async function(listingId) {
+            if (!db.currentUser) return;
+            const listingRef = doc(dbFirestore, 'listings', listingId);
+            const listingSnap = await getDoc(listingRef);
+
+            if (!listingSnap.exists()) {
+                alert('This listing is no longer available.');
+                return;
+            }
+
+            const listing = listingSnap.data();
+            if (listing.sellerEmail !== db.currentUser.email) {
+                alert('You can delete only your own listings.');
+                return;
+            }
+            if (listing.status !== 'active') {
+                alert('A listing with a payment in progress cannot be deleted.');
+                return;
+            }
+            if (confirm('Delete your listing? This cannot be undone.')) {
+                await deleteDoc(listingRef);
+                alert('Your listing was deleted.');
+            }
+        };
+
+        window.deleteOwnPost = async function(category, postId) {
+            if (!db.currentUser) return;
+            const collections = { pg: 'pgAds', fest: 'fests', announcement: 'announcements' };
+            const collectionName = collections[category];
+            if (!collectionName) return;
+
+            const postRef = doc(dbFirestore, collectionName, postId);
+            const postSnap = await getDoc(postRef);
+            if (!postSnap.exists()) {
+                alert('This post is no longer available.');
+                return;
+            }
+            if (postSnap.data().posterEmail !== db.currentUser.email) {
+                alert('You can delete only your own posts.');
+                return;
+            }
+            if (confirm('Delete your post? This cannot be undone.')) {
+                await deleteDoc(postRef);
+                alert('Your post was deleted.');
+            }
+        };
+
+        function renderListings(filteredList = null) {
+            const feed = document.getElementById('listings-feed');
+            const activeListings = (filteredList || db.listings).filter(i => i.status !== 'purchased');
+            document.getElementById('listing-count').innerText = `${activeListings.length} items available`;
+
+            if (activeListings.length === 0) {
+                feed.innerHTML = `<div class="text-center py-8 text-gray-400 text-xs col-span-full">No items found.</div>`;
+                return;
+            }
+
+            feed.innerHTML = activeListings.map(item => `
+                <div class="bg-white dark:bg-gray-800 rounded-2xl p-3 shadow-sm border border-gray-200 dark:border-gray-700 flex gap-3 relative">
+                    ${renderAttachmentElement(item.photo)}
+                    <div class="flex-1 flex flex-col justify-between">
+                        <div>
+                            <div class="flex justify-between items-start">
+                                <span class="text-[9px] font-bold accent-text accent-light-bg px-2 py-0.5 rounded-full">${item.category}</span>
+                                <button onclick="openReportModal('${item.id}')" class="text-gray-400 hover:text-red-600"><i data-lucide="flag" class="w-3.5 h-3.5"></i></button>
+                            </div>
+                            <h4 class="font-bold text-gray-900 dark:text-gray-100 text-xs mt-1 line-clamp-1">${item.title}</h4>
+                            <p class="text-[10px] text-gray-500 dark:text-gray-400 flex items-center gap-1 mt-0.5"><i data-lucide="map-pin" class="w-3 h-3"></i> ${item.location}</p>
+                        </div>
+                        <div class="flex justify-between items-center mt-2">
+                            <span class="font-extrabold text-gray-900 dark:text-gray-100 text-sm">₹${item.price}</span>
+                            <div class="flex gap-1.5 items-center">
+                                <button onclick="openChat('${item.id}')" class="px-2.5 py-1 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 text-[10px] font-bold rounded-lg flex items-center gap-1">
+                                    <i data-lucide="message-square" class="w-3 h-3"></i> Chat
+                                </button>
+                                ${item.status === 'paid_escrow' && item.sellerEmail === (db.currentUser && db.currentUser.email)
+                                    ? `<button onclick="sellerClaimOtp('${item.id}')" class="px-2 py-1 bg-green-600 hover:bg-green-700 text-white text-[10px] font-bold rounded-lg shadow animate-pulse">💰 Claim Money</button>`
+                                    : item.status === 'paid_escrow' 
+                                    ? `<span class="px-2 py-1 bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-gray-300 text-[10px] font-bold rounded-lg">Waiting for seller...</span>`
+                                    : `<button onclick="initiateItemCheckout('${item.id}')" class="px-2.5 py-1 accent-bg text-white text-[10px] font-bold rounded-lg shadow">Buy</button>`
+                                }
+                                ${item.sellerEmail === (db.currentUser && db.currentUser.email) && item.status === 'active'
+                                    ? `<button onclick="deleteOwnListing('${item.id}')" class="px-2.5 py-1 bg-red-600 hover:bg-red-700 text-white text-[10px] font-bold rounded-lg">Delete</button>`
+                                    : ''
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+            setTimeout(() => lucide.createIcons(), 50);
+        }
+        window.renderListings = renderListings;
+
+        function filterListings() {
+            const query = document.getElementById('search-input').value.toLowerCase();
+            const filtered = db.listings.filter(i => (i.title.toLowerCase().includes(query) || i.category.toLowerCase().includes(query)));
+            renderListings(filtered);
+        }
+        window.filterListings = filterListings;
+
+        async function handlePostListing(e) {
+            e.preventDefault();
+            const fileInput = document.getElementById('sell-file');
+            const compressedPhoto = await processFileToCompressedBase64(fileInput.files[0]);
+
+            const newItem = {
+                title: document.getElementById('sell-title').value,
+                category: document.getElementById('sell-category').value,
+                price: Number(document.getElementById('sell-price').value),
+                location: document.getElementById('sell-location').value,
+                desc: document.getElementById('sell-desc').value,
+                photo: compressedPhoto || '',
+                status: 'active',
+                seller: db.currentUser.name,
+                sellerEmail: db.currentUser.email,
+                createdAt: Date.now()
+            };
+
+            await addDoc(collection(dbFirestore, "listings"), newItem);
+            e.target.reset();
+            alert('Listing published successfully!');
+            openScreen('home');
+        }
+        window.handlePostListing = handlePostListing;
+
+        function openAdForm(category) {
+            currentAdCategory = category;
+            document.getElementById('ad-form-heading').innerText = category === 'pg' ? 'Post Ad / Rental' : category === 'fest' ? 'Post Campus Fest' : 'Post Announcement';
+            document.getElementById('input-ad-title').value = '';
+            document.getElementById('input-ad-desc').value = '';
+            document.getElementById('input-ad-file').value = '';
+            openScreen('ad-form');
+        }
+        window.openAdForm = openAdForm;
+
+        async function submitAdForm(e) {
+            e.preventDefault();
+            const fileInput = document.getElementById('input-ad-file');
+            const compressedFileUrl = await processFileToCompressedBase64(fileInput.files[0]);
+            
+            tempAdData = {
+                title: document.getElementById('input-ad-title').value,
+                details: document.getElementById('input-ad-desc').value,
+                category: currentAdCategory,
+                fileUrl: compressedFileUrl,
+                posterEmail: db.currentUser ? db.currentUser.email : 'unknown',
+                timestamp: Date.now()
+            };
+            openAdCheckout(currentAdCategory);
+        }
+        window.submitAdForm = submitAdForm;
+
+        async function submitGrievanceForm(e) {
+            e.preventDefault();
+            tempGrievanceData = {
+                email: db.currentUser ? db.currentUser.email : 'unknown',
+                name: db.currentUser ? db.currentUser.name : 'Anonymous',
+                description: document.getElementById('grievance-desc').value,
+                timestamp: new Date().toLocaleString()
+            };
+            activeCheckoutType = 'grievance';
+            document.getElementById('checkout-purpose').innerText = 'Grievance Filing Fee';
+            document.getElementById('bill-item-name').innerText = 'Grievance Submission';
+            document.getElementById('bill-base-price').innerText = '₹100';
+            document.getElementById('fee-breakdown-box').style.display = 'none';
+            document.getElementById('bill-total').innerText = '₹100';
+            openScreen('checkout');
+        }
+        window.submitGrievanceForm = submitGrievanceForm;
+
+        function renderPGAds() {
+            const feed = document.getElementById('pg-feed');
+            feed.innerHTML = db.pgAds.length === 0 ? `<div class="text-center py-8 text-gray-400 text-xs col-span-full">No active ads.</div>` :
+                db.pgAds.map(ad => `
+                    <div class="bg-white dark:bg-gray-800 p-3.5 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm space-y-2">
+                        <h4 class="font-bold text-xs text-gray-900 dark:text-gray-100">${ad.title}</h4>
+                        <p class="text-xs text-gray-600 dark:text-gray-300">${ad.details}</p>
+                        ${renderFullAttachmentElement(ad.fileUrl)}
+                        ${renderOwnerDeleteButton('pg', ad.id, ad.posterEmail)}
+                    </div>
+                `).join('');
+            setTimeout(() => lucide.createIcons(), 50);
+        }
+        window.renderPGAds = renderPGAds;
+
+        function renderFests() {
+            const feed = document.getElementById('fest-feed');
+            feed.innerHTML = db.fests.length === 0 ? `<div class="text-center py-8 text-gray-400 text-xs col-span-full">No active fests.</div>` :
+                db.fests.map(fest => `
+                    <div class="bg-white dark:bg-gray-800 p-3.5 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm space-y-2">
+                        <h4 class="font-bold text-xs text-gray-900 dark:text-gray-100">${fest.title}</h4>
+                        <p class="text-xs text-gray-600 dark:text-gray-300">${fest.details}</p>
+                        ${renderFullAttachmentElement(fest.fileUrl)}
+                        ${renderOwnerDeleteButton('fest', fest.id, fest.posterEmail)}
+                    </div>
+                `).join('');
+            setTimeout(() => lucide.createIcons(), 50);
+        }
+        window.renderFests = renderFests;
+
+        function renderAnnouncements() {
+            const feed = document.getElementById('announcement-feed');
+            feed.innerHTML = db.announcements.length === 0 ? `<div class="text-center py-8 text-gray-400 text-xs col-span-full">No notices.</div>` :
+                db.announcements.map(ann => `
+                    <div class="bg-white dark:bg-gray-800 p-3.5 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm space-y-2">
+                        <h4 class="font-bold text-xs text-gray-900 dark:text-gray-100">${ann.title}</h4>
+                        <p class="text-xs text-gray-600 dark:text-gray-300">${ann.details}</p>
+                        ${renderFullAttachmentElement(ann.fileUrl)}
+                        ${renderOwnerDeleteButton('announcement', ann.id, ann.posterEmail)}
+                    </div>
+                `).join('');
+            setTimeout(() => lucide.createIcons(), 50);
+        }
+        window.renderAnnouncements = renderAnnouncements;
+
+        function openAdCheckout(type) {
+            activeCheckoutType = type;
+            let title = type === 'pg' ? 'Ad / Rental Fee' : type === 'fest' ? 'Fest Ad Fee' : 'Announcement Fee';
+            document.getElementById('checkout-purpose').innerText = title;
+            document.getElementById('bill-item-name').innerText = title;
+            document.getElementById('bill-base-price').innerText = '₹300';
+            document.getElementById('fee-breakdown-box').style.display = 'none';
+            document.getElementById('bill-total').innerText = '₹300';
+            openScreen('checkout');
+        }
+
+        function initiateItemCheckout(itemId) {
+            const item = db.listings.find(i => i.id === itemId);
+            pendingItemData = item;
+            activeCheckoutType = 'item';
+            const base = item.price;
+            const buyerFee = base * 0.05;
+            document.getElementById('checkout-purpose').innerText = `Purchase: ${item.title}`;
+            document.getElementById('bill-item-name').innerText = item.title;
+            document.getElementById('bill-base-price').innerText = `₹${base}`;
+            document.getElementById('fee-breakdown-box').style.display = 'block';
+            document.getElementById('bill-buyer-fee').innerText = `₹${buyerFee.toFixed(2)}`;
+            document.getElementById('bill-seller-fee').innerText = `-₹${(base * 0.02).toFixed(2)}`;
+            document.getElementById('bill-total').innerText = `₹${(base + buyerFee).toFixed(2)}`;
+            openScreen('checkout');
+        }
+        window.initiateItemCheckout = initiateItemCheckout;
+
+        window.confirmQRPayment = async function() {
+            if (activeCheckoutType === 'item') {
+                const otp = Math.floor(1000 + Math.random() * 9000).toString();
+                const sellerEmail = pendingItemData.sellerEmail || 'seller';
+                await updateDoc(doc(dbFirestore, "listings", pendingItemData.id), {
+                    status: 'paid_escrow',
+                    escrowOtp: otp,
+                    buyerEmail: db.currentUser.email,
+                    sellerEmail: sellerEmail
+                });
+                // ✅ SHOW OTP TO BUYER - Buyer will share this with seller
+                alert(`✅ Payment Successful!\n\n🔐 YOUR DELIVERY OTP: [ ${otp} ]\n\n📱 Share this OTP with the seller.\n\nThe seller will use this OTP to confirm delivery and claim payment.`);
+                openScreen('home');
+            } else if (activeCheckoutType === 'grievance') {
+                if (tempGrievanceData) {
+                    await addDoc(collection(dbFirestore, "grievances"), tempGrievanceData);
+                    alert('Grievance payment of ₹100 successful! Issue submitted to admin[cite: 1].');
+                    tempGrievanceData = null;
+                    openScreen('home');
+                }
+            } else {
+                if (tempAdData) {
+                    if (tempAdData.category === 'pg') await addDoc(collection(dbFirestore, "pgAds"), tempAdData);
+                    if (tempAdData.category === 'fest') await addDoc(collection(dbFirestore, "fests"), tempAdData);
+                    if (tempAdData.category === 'announcement') await addDoc(collection(dbFirestore, "announcements"), tempAdData);
+                    alert('Payment successful! Ad published.');
+                    openScreen(tempAdData.category === 'pg' ? 'ads' : tempAdData.category === 'fest' ? 'fests' : 'announcements');
+                    tempAdData = null;
+                }
+            }
+        };
+
+        window.sellerClaimOtp = async function(itemId) {
+            const item = db.listings.find(i => i.id === itemId);
+            
+            // ✅ SECURITY CHECK: Only allow seller to claim OTP
+            if (item.sellerEmail !== db.currentUser.email) {
+                alert('❌ Only the seller can claim this payment!\n\nYou are not authorized to enter this OTP.');
+                return;
+            }
+            
+            // ✅ SELLER ENTERS OTP: Seller enters the OTP that buyer shared
+            const enteredOtp = prompt(`Enter the Delivery OTP shared by the buyer for "${item.title}":\n\n(Buyer should have shared this OTP with you)`);
+            
+            if (enteredOtp === item.escrowOtp) {
+                // ✅ Update listing status and record completion
+                await updateDoc(doc(dbFirestore, "listings", itemId), { 
+                    status: 'purchased',
+                    deliveryConfirmedAt: Date.now(),
+                    deliveryConfirmedBy: db.currentUser.email
+                });
+                
+                // ✅ SHOW SUCCESS MESSAGE TO SELLER ONLY
+                alert(`✅ 💰 MONEY RECEIVED SUCCESSFULLY!\n\nTransaction Complete:\n• Item: ${item.title}\n• Amount: ₹${item.price}\n• Buyer: ${item.buyerEmail || 'Guest'}\n\nYour payout has been processed to your bank account!`);
+                renderListings();
+            } else if (enteredOtp !== null) {
+                alert('❌ Incorrect OTP.\n\nPlease verify the OTP with the buyer and try again.');
+            }
+        };
+
+        async function openChat(listingId) {
+            const item = db.listings.find(i => i.id === listingId);
+            document.getElementById('chat-title').innerText = `Chat: ${item ? item.title : 'Inquiry'}`;
+            
+            activeChatRoomId = `chat_${listingId}`;
+            
+            const chatRef = doc(dbFirestore, "chats", activeChatRoomId);
+            const chatSnap = await getDoc(chatRef);
+
+            if (!chatSnap.exists()) {
+                await setDoc(chatRef, {
+                    listingId: listingId,
+                    listingTitle: item ? item.title : '',
+                    sellerEmail: item ? item.sellerEmail : '',
+                    messages: []
+                });
+            }
+
+            onSnapshot(chatRef, (docSnap) => {
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    renderChatMessages(data.messages || [], data.sellerEmail);
+                }
+            });
+
+            openScreen('chat');
+        }
+        window.openChat = openChat;
+
+        window.sendChatMessage = async function() {
+            const input = document.getElementById('chat-input');
+            const text = input.value.trim();
+            if (!text || !activeChatRoomId) return;
+
+            const chatRef = doc(dbFirestore, "chats", activeChatRoomId);
+            const chatSnap = await getDoc(chatRef);
+            if (chatSnap.exists()) {
+                const data = chatSnap.data();
+                const isSeller = db.currentUser.email === data.sellerEmail;
+                const senderType = isSeller ? 'seller' : 'buyer';
+                
+                const currentMsgs = data.messages || [];
+                currentMsgs.push({ 
+                    sender: senderType, 
+                    senderEmail: db.currentUser.email, 
+                    text: text, 
+                    timestamp: Date.now() 
+                });
+
+                await updateDoc(chatRef, { messages: currentMsgs });
+                input.value = '';
+            }
+        };
+
+        function renderChatMessages(messages, sellerEmail) {
+            const container = document.getElementById('chat-messages');
+            if (!container) return;
+            container.innerHTML = messages.map(m => {
+                const isMe = m.senderEmail === db.currentUser.email;
+                const alignment = isMe ? 'justify-end' : 'justify-start';
+                const bubbleStyle = m.senderEmail === sellerEmail ? 'bg-blue-100 dark:bg-blue-950 text-gray-800 dark:text-gray-200 border border-blue-200 dark:border-blue-900' : (isMe ? 'accent-bg text-white' : 'bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 border border-gray-200 dark:border-gray-700');
+                return `
+                    <div class="flex ${alignment}">
+                        <div class="max-w-[75%] px-3.5 py-2 rounded-2xl text-xs ${bubbleStyle}">
+                            <span class="block font-bold text-[9px] opacity-75 mb-0.5">${escapeHtml(m.senderEmail || '')} (${escapeHtml(m.sender || '')})</span>
+                            <p class="break-words">${escapeHtml(m.text)}</p>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return String(str)
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
+        let reportingListingId = null;
+        function openReportModal(itemId) {
+            reportingListingId = itemId;
+            document.getElementById('report-item-title').innerText = db.listings.find(i => i.id === itemId).title;
+            openScreen('report');
+        }
+        window.openReportModal = openReportModal;
+
+        window.submitReport = async function(e) {
+            e.preventDefault();
+            const item = db.listings.find(i => i.id === reportingListingId);
+            const newReport = {
+                listingId: reportingListingId,
+                listingTitle: item ? item.title : 'Unknown Item',
+                reporterName: db.currentUser ? db.currentUser.name : 'Anonymous',
+                reporterEmail: db.currentUser ? db.currentUser.email : 'unknown@gmail.com.edu',
+                reportedUser: item ? (item.seller || 'Unknown') : 'Unknown',
+                reportedUserEmail: item ? (item.sellerEmail || 'seller@gmail.com.edu') : 'unknown',
+                reason: document.getElementById('report-reason').value,
+                desc: document.getElementById('report-desc').value,
+                timestamp: new Date().toLocaleString()
+            };
+            await addDoc(collection(dbFirestore, "reports"), newReport);
+            alert('Report submitted to admin for verification.');
+            openScreen('home');
+        };
+
+        function promptAdminLogin() {
+            if (prompt('Enter Admin Passcode:') === 'admin123') openScreen('admin');
+            else alert('Incorrect passcode.');
+        }
+        window.promptAdminLogin = promptAdminLogin;
+
+        function switchAdminTab(tabName) {
+            document.querySelectorAll('.admin-tab-content').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('[id^="atab-btn-"]').forEach(btn => {
+                btn.classList.remove('bg-gray-800', 'text-amber-400');
+                btn.classList.add('text-gray-300');
+            });
+
+            document.getElementById(`atab-${tabName}`).classList.remove('hidden');
+            const activeBtn = document.getElementById(`atab-btn-${tabName}`);
+            activeBtn.classList.add('bg-gray-800', 'text-amber-400');
+            activeBtn.classList.remove('text-gray-300');
+
+            if (tabName === 'content') renderAdminContent();
+            if (tabName === 'reports') renderAdminReports();
+            if (tabName === 'users') renderAdminUsers();
+            if (tabName === 'grievances') renderAdminGrievances();
+        }
+        window.switchAdminTab = switchAdminTab;
+
+        function renderAdminDashboard() {
+            switchAdminTab('content');
+        }
+
+        function renderAdminContent() {
+            const listingsContainer = document.getElementById('admin-listings-list');
+            listingsContainer.innerHTML = db.listings.length === 0 ? `<p class="text-[11px] text-gray-400 col-span-full">No listings.</p>` :
+                db.listings.map(item => `
+                    <div class="bg-gray-950 p-2.5 rounded-xl border border-gray-800 flex justify-between items-center text-xs">
+                        <div>
+                            <p class="font-bold text-white">${item.title} <span class="text-[10px] text-amber-400 font-normal">₹${item.price}</span></p>
+                            <p class="text-[10px] text-gray-300">Seller: ${item.seller || 'Unknown'} (${item.category})</p>
+                        </div>
+                        <button onclick="adminDeleteListing('${item.id}')" class="px-2.5 py-1 bg-red-600 hover:bg-red-700 text-white font-bold rounded-lg text-[10px]">Delete</button>
+                    </div>
+                `).join('');
+
+            const adsContainer = document.getElementById('admin-ads-list');
+            const allAds = [...db.pgAds.map(a => ({...a, typeName: 'PG/Rental'})), ...db.fests.map(f => ({...f, typeName: 'Fest'})), ...db.announcements.map(a => ({...a, typeName: 'Notice'}))];
+            
+            adsContainer.innerHTML = allAds.length === 0 ? `<p class="text-[11px] text-gray-400 col-span-full">No active ads.</p>` :
+                allAds.map(ad => `
+                    <div class="bg-gray-950 p-2.5 rounded-xl border border-gray-800 flex justify-between items-center text-xs">
+                        <div>
+                            <p class="font-bold text-white">${ad.title} <span class="text-[10px] text-amber-400 font-normal">[${ad.typeName}]</span></p>
+                        </div>
+                        <button onclick="adminDeleteAd('${ad.category}', '${ad.id}')" class="px-2.5 py-1 bg-red-600 hover:bg-red-700 text-white font-bold rounded-lg text-[10px]">Delete</button>
+                    </div>
+                `).join('');
+        }
+        window.renderAdminContent = renderAdminContent;
+
+        window.adminDeleteListing = async function(id) {
+            if (confirm('Delete this listing from cloud?')) {
+                await deleteDoc(doc(dbFirestore, "listings", id));
+            }
+        };
+
+        window.adminDeleteAd = async function(category, id) {
+            if (confirm('Delete this ad from cloud?')) {
+                const colName = category === 'pg' ? 'pgAds' : category === 'fest' ? 'fests' : 'announcements';
+                await deleteDoc(doc(dbFirestore, colName, id));
+            }
+        };
+
+        function renderAdminReports() {
+            const container = document.getElementById('admin-reports-container');
+            container.innerHTML = db.reports.length === 0 ? `<p class="text-xs text-gray-400 col-span-full">No reports submitted.</p>` :
+                db.reports.map(r => `
+                    <div class="bg-gray-950 p-3 rounded-xl border border-red-900 space-y-2 text-xs" id="report-card-${r.id}">
+                        <div class="flex justify-between items-start">
+                            <span class="bg-red-900 text-red-200 px-2 py-0.5 rounded text-[10px] font-bold">Reason: ${r.reason}</span>
+                            <span class="text-[10px] text-gray-400">${r.timestamp}</span>
+                        </div>
+                        <div class="space-y-1 text-[11px] text-gray-200 border-t border-gray-800 pt-1.5">
+                            <p><b>Reported Item:</b> ${escapeHtml(r.listingTitle)}</p>
+                            <p><b>Reporter:</b> ${escapeHtml(r.reporterName)} (${escapeHtml(r.reporterEmail)})</p>
+                            <p><b>Seller (Accused):</b> ${escapeHtml(r.reportedUser)} (${escapeHtml(r.reportedUserEmail)})</p>
+                            <p class="text-gray-300 italic">"${escapeHtml(r.desc)}"</p>
+                        </div>
+
+                        <!-- Chat Audit Preview Container -->
+                        <div id="report-chat-preview-${r.id}" class="hidden bg-gray-900 p-2.5 rounded-xl space-y-2 max-h-40 overflow-y-auto border border-gray-800">
+                            <p class="text-[10px] font-bold text-amber-300 uppercase">Chat Log Audit:</p>
+                            <div id="report-chat-messages-${r.id}" class="space-y-1 text-[10px]">Loading chat...</div>
+                        </div>
+
+                        <div class="flex flex-wrap gap-2 pt-2 border-t border-gray-800">
+                            <button onclick="adminToggleReportChat('${r.listingId}', '${r.id}')" class="px-2.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold text-[10px]">View Chat</button>
+                            <button onclick="adminGuiltyRemove('${r.id}', '${r.reportedUserEmail}', '${r.listingId}')" class="px-2.5 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded-lg font-bold text-[10px]">Remove Accused & Listing</button>
+                            <button onclick="adminResolveReport('${r.id}')" class="px-2.5 py-1.5 bg-green-700 hover:bg-green-800 text-white rounded-lg font-bold text-[10px]">Dismiss Report</button>
+                        </div>
+                    </div>
+                `).join('');
+        }
+        window.renderAdminReports = renderAdminReports;
+
+        function renderAdminGrievances() {
+            const container = document.getElementById('admin-grievances-container');
+            if (!container) return;
+            container.innerHTML = db.grievances.length === 0 ? `<p class="text-xs text-gray-400 col-span-full">No grievances filed.</p>` :
+                db.grievances.map(g => `
+                    <div class="bg-gray-950 p-3 rounded-xl border border-amber-900 space-y-2 text-xs">
+                        <div class="flex justify-between items-start">
+                            <span class="bg-amber-950 text-amber-300 px-2 py-0.5 rounded text-[10px] font-bold">Paid ₹100[cite: 1]</span>
+                            <span class="text-[10px] text-gray-400">${g.timestamp}</span>
+                        </div>
+                        <div class="space-y-1 text-[11px] text-gray-200 border-t border-gray-800 pt-1.5">
+                            <p><b>Student:</b> ${escapeHtml(g.name)} (${escapeHtml(g.email)})</p>
+                            <p class="text-gray-300 italic">"${escapeHtml(g.description)}"</p>
+                        </div>
+                        <div class="flex justify-end pt-2 border-t border-gray-800">
+                            <button onclick="adminResolveGrievance('${g.id}')" class="px-2.5 py-1.5 bg-green-700 hover:bg-green-800 text-white rounded-lg font-bold text-[10px]">Resolve & Delete</button>
+                        </div>
+                    </div>
+                `).join('');
+        }
+        window.renderAdminGrievances = renderAdminGrievances;
+
+        window.adminResolveGrievance = async function(id) {
+            if (confirm('Mark this grievance as resolved and remove it?')) {
+                await deleteDoc(doc(dbFirestore, "grievances", id));
+            }
+        };
+
+        window.adminToggleReportChat = async function(listingId, reportId) {
+            const previewEl = document.getElementById(`report-chat-preview-${reportId}`);
+            const messagesEl = document.getElementById(`report-chat-messages-${reportId}`);
+            
+            if (!previewEl.classList.contains('hidden')) {
+                previewEl.classList.add('hidden');
+                return;
+            }
+
+            previewEl.classList.remove('hidden');
+            messagesEl.innerHTML = 'Loading chat history...';
+
+            const chatRoomId = `chat_${listingId}`;
+            const chatRef = doc(dbFirestore, "chats", chatRoomId);
+            const chatSnap = await getDoc(chatRef);
+
+            if (!chatSnap.exists() || !chatSnap.data().messages || chatSnap.data().messages.length === 0) {
+                messagesEl.innerHTML = '<p class="text-gray-400 italic">No chat messages found for this item yet.</p>';
+                return;
+            }
+
+            const messages = chatSnap.data().messages;
+            const sellerEmail = chatSnap.data().sellerEmail;
+
+            messagesEl.innerHTML = messages.map(m => {
+                const isSeller = m.senderEmail === sellerEmail;
+                const senderLabel = isSeller ? 'Seller (Accused)' : 'Buyer / User';
+                return `
+                    <div class="bg-gray-900 p-2 rounded border border-gray-800">
+                        <span class="font-bold text-amber-300">${escapeHtml(m.senderEmail)} (${senderLabel}):</span>
+                        <p class="text-white mt-0.5">${escapeHtml(m.text)}</p>
+                    </div>
+                `;
+            }).join('');
+        };
+
+        window.adminGuiltyRemove = async function(reportId, accusedEmail, listingId) {
+            if (confirm(`Found Guilty: Are you sure you want to remove the accused user (${accusedEmail}) and delete their listing?`)) {
+                try {
+                    if (accusedEmail && accusedEmail !== 'unknown') {
+                        await deleteDoc(doc(dbFirestore, "users", accusedEmail));
+                    }
+                    if (listingId) {
+                        await deleteDoc(doc(dbFirestore, "listings", listingId));
+                    }
+                    await deleteDoc(doc(dbFirestore, "reports", reportId));
+                    alert('Accused user and listing removed successfully.');
+                } catch (err) {
+                    console.error("Error removing accused:", err);
+                    alert('Failed to remove accused user.');
+                }
+            }
+        };
+
+        window.adminResolveReport = async function(reportId) {
+            if (confirm('Dismiss this report?')) {
+                await deleteDoc(doc(dbFirestore, "reports", reportId));
+            }
+        };
+
+        function renderAdminUsers() {
+            const container = document.getElementById('admin-users-container');
+            container.innerHTML = db.users.length === 0 ? `<p class="text-xs text-gray-400 col-span-full">No registered users found.</p>` :
+                db.users.map(u => `
+                    <div class="bg-gray-950 p-3 rounded-xl border border-gray-800 flex justify-between items-center text-xs">
+                        <div class="space-y-0.5">
+                            <p class="font-bold text-amber-300 text-sm">${u.name}</p>
+                            <p class="text-[11px] text-gray-200"><b>Email:</b> ${u.email}</p>
+                            <p class="text-[10px] text-gray-300"><b>College:</b> ${u.college} | <b>Course:</b> ${u.course} (${u.year})</p>
+                        </div>
+                        <button onclick="adminDeleteUser('${u.email}')" class="px-2.5 py-1 bg-red-600 hover:bg-red-700 text-white font-bold rounded-lg text-[10px]">Remove</button>
+                    </div>
+                `).join('');
+        }
+        window.renderAdminUsers = renderAdminUsers;
+
+        window.adminDeleteUser = async function(email) {
+            if (confirm(`Are you sure you want to remove user ${email}?`)) {
+                try {
+                    await deleteDoc(doc(dbFirestore, "users", email));
+                    alert('User removed successfully from database.');
+                } catch (err) {
+                    console.error("Error deleting user:", err);
+                    alert('Failed to remove user.');
+                }
+            }
+        };
+
+        window.searchUserForAdminChat = async function() {
+            const queryText = document.getElementById('admin-search-user').value.trim().toLowerCase();
+            const container = document.getElementById('admin-direct-chat-area');
+            if (!queryText) {
+                container.innerHTML = '<p class="text-xs text-gray-400">Please enter an email or name to search.</p>';
+                return;
+            }
+            container.innerHTML = '<p class="text-xs text-gray-300">Searching chats...</p>';
+            const chatsSnap = await getDocs(collection(dbFirestore, "chats"));
+            let matchedChats = [];
+            chatsSnap.forEach(docSnap => {
+                const data = docSnap.data();
+                if ((data.listingTitle && data.listingTitle.toLowerCase().includes(queryText)) || (data.sellerEmail && data.sellerEmail.toLowerCase().includes(queryText))) {
+                    matchedChats.push({ id: docSnap.id, ...data });
+                }
+            });
+            if (matchedChats.length === 0) {
+                container.innerHTML = '<p class="text-xs text-gray-400">No chats found matching query.</p>';
+                return;
+            }
+            container.innerHTML = matchedChats.map(c => `
+                <div class="bg-gray-900 p-3 rounded-xl border border-gray-800 space-y-2 text-xs">
+                    <p class="font-bold text-amber-300">Listing: ${escapeHtml(c.listingTitle)}</p>
+                    <p class="text-gray-300">Seller: ${escapeHtml(c.sellerEmail)}</p>
+                    <div class="space-y-1 max-h-32 overflow-y-auto bg-gray-950 p-2 rounded">
+                        ${(c.messages || []).map(m => `<p class="text-[10px]"><b class="text-amber-400">${escapeHtml(m.senderEmail)}:</b> ${escapeHtml(m.text)}</p>`).join('')}
+                    </div>
+                </div>
+            `).join('');
+        };
+    </script>
+</body>
+</html>
