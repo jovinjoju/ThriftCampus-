@@ -110,3 +110,10 @@ BCA Student | Aspiring Software Developer | Interested in AI and Web Development
 <p align="center">
   <i>Built with a focus on students, affordability, and sustainability.</i>
 </p>
+## Copyright
+
+Copyright © 2026 Jovin Joju. All rights reserved.
+
+This project and its original source code are presented for portfolio and educational purposes. No permission is granted to copy, modify, redistribute, or use the original code without prior written permission, except where permitted by applicable law.
+
+Third-party components, libraries, and assets remain subject to their respective licences.
