@@ -10,12 +10,6 @@
   <b>A student-focused marketplace for buying, selling, and reusing items within the college community.</b>
 </p>
 
-<p align="center">
-  <img src="https://img.shields.io/badge/Project-Student%20Marketplace-2563eb?style=for-the-badge" alt="Student marketplace" />
-  <img src="https://img.shields.io/badge/Focus-Sustainability-16a34a?style=for-the-badge" alt="Sustainability" />
-  <img src="https://img.shields.io/badge/Status-Development-orange?style=for-the-badge" alt="Development status" />
-</p>
-
 ---
 
 ## 📖 About the Project
